@@ -97,6 +97,74 @@ python3 merge_results_to_csv.py
 
 This writes `results/results.csv`.
 
+## Process a large local image batch
+
+Use this workflow when you want to process many images on your own machine.
+
+1. Put all input images in the repo's `images/` directory.
+
+   Supported file extensions are `.jpg`, `.jpeg`, `.png`, `.webp`, and `.gif`.
+   Keep filenames unique, because output files are named from the image stem.
+
+2. Create and load your local `.env` file.
+
+   Create `.env` in the repo root:
+
+   ```bash
+   export OPENROUTER_API_KEY=sk-or-...
+   ```
+
+   Load it before each run:
+
+   ```bash
+   source .env
+   ```
+
+3. Choose the parallelism for the batch runner.
+
+   Start conservatively for large batches:
+
+   ```bash
+   python3 generate_batch_run.py --max-jobs 4
+   ```
+
+   Increase `--max-jobs` only if your OpenRouter rate limits, network, and
+   local machine can handle more concurrent requests.
+
+4. Run the generated batch.
+
+   ```bash
+   bash batch_run.sh
+   ```
+
+   The terminal shows clean progress output only:
+
+   ```text
+   [progress] [##########----------] 50/100 50%
+   ```
+
+5. Inspect detailed logs if needed.
+
+   The generated runner redirects each image job's stdout and stderr to
+   `logs/<image-name>.log`, so the progress display stays readable. If a job
+   fails, check the matching file in `logs/`.
+
+6. Merge successful JSONL outputs into CSV.
+
+   ```bash
+   python3 merge_results_to_csv.py
+   ```
+
+   The final CSV is written to:
+
+   ```text
+   results/results.csv
+   ```
+
+Rerunning the batch can overwrite existing `results/*-result.jsonl`,
+`results/results.csv`, and `logs/*.log`. Copy out any previous outputs you want
+to keep before starting another large run.
+
 ## Run with GitHub Actions
 
 This repo includes a manual GitHub Actions workflow:
