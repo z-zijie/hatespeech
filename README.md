@@ -82,14 +82,12 @@ Run the batch:
 bash batch_run.sh
 ```
 
-The batch runner prints a dependency-free text progress bar as images finish:
+The batch runner prints a dependency-free text progress bar after each
+parallel batch finishes:
 
 ```text
 [progress] [##########----------] 5/11 45%
 ```
-
-If any image job fails, the progress line includes the failed count and the
-batch exits with a non-zero status after all jobs in flight finish.
 
 Child-process output is redirected away from the screen to keep the progress
 log clean. Detailed per-image logs are written to `logs/*.log`, and per-image
@@ -164,7 +162,8 @@ Use this workflow when you want to process many images on your own machine.
    bash batch_run.sh
    ```
 
-   The terminal shows clean progress output only:
+   The terminal shows clean progress output only, updated after each parallel
+   batch finishes:
 
    ```text
    [progress] [##########----------] 50/100 50%

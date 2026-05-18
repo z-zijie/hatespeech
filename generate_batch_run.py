@@ -72,8 +72,6 @@ def progress_helpers(total_images: int) -> list[str]:
     return [
         f"TOTAL_IMAGES={total_images}",
         "completed=0",
-        "failed=0",
-        "overall_status=0",
         "bar_width=20",
         "",
         "print_progress() {",
@@ -90,30 +88,16 @@ def progress_helpers(total_images: int) -> list[str]:
         "    bar=\"$(printf '%*s' \"$filled\" '' | tr ' ' '#')\"",
         "    bar=\"${bar}$(printf '%*s' \"$empty\" '' | tr ' ' '-')\"",
         "",
-        "    if [ \"$failed\" -gt 0 ]; then",
-        "        printf '[progress] [%s] %d/%d %d%% (%d failed)\\n' \"$bar\" \"$completed\" \"$TOTAL_IMAGES\" \"$percent\" \"$failed\"",
-        "    else",
-        "        printf '[progress] [%s] %d/%d %d%%\\n' \"$bar\" \"$completed\" \"$TOTAL_IMAGES\" \"$percent\"",
-        "    fi",
+        "    printf '[progress] [%s] %d/%d %d%%\\n' \"$bar\" \"$completed\" \"$TOTAL_IMAGES\" \"$percent\"",
         "}",
         "",
-        "wait_for_batch() {",
-        "    local pid",
-        "    local status",
+        "wait_and_print() {",
+        "    local batch_count=\"$1\"",
         "",
-        "    for pid in \"$@\"; do",
-        "        if wait \"$pid\"; then",
-        "            status=0",
-        "        else",
-        "            status=$?",
-        "            failed=$((failed + 1))",
-        "            overall_status=1",
-        "            printf '[progress] job failed pid=%s exit=%d\\n' \"$pid\" \"$status\"",
-        "        fi",
+        "    wait",
         "",
-        "        completed=$((completed + 1))",
-        "        print_progress",
-        "    done",
+        "    completed=$((completed + batch_count))",
+        "    print_progress",
         "}",
         "",
     ]
@@ -128,19 +112,18 @@ def build_script(images: list[BatchImage], max_jobs: int) -> str:
         "",
         *progress_helpers(len(images)),
         "print_progress",
-        "",
-        "batch_pids=()",
     ]
 
+    batch_count = 0
     for index, batch_image in enumerate(images, start=1):
         lines.append(command_for(batch_image))
-        lines.append("batch_pids+=(\"$!\")")
+        batch_count += 1
         if index % max_jobs == 0:
-            lines.extend(["wait_for_batch \"${batch_pids[@]}\"", "batch_pids=()", ""])
+            lines.extend([f"wait_and_print {batch_count}", ""])
+            batch_count = 0
 
-    if len(images) % max_jobs:
-        lines.append("wait_for_batch \"${batch_pids[@]}\"")
-    lines.extend(["", "exit \"$overall_status\""])
+    if batch_count:
+        lines.append(f"wait_and_print {batch_count}")
     return "\n".join(lines) + "\n"
 
 
