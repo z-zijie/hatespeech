@@ -23,10 +23,12 @@ Generate the batch runner:
 python3 generate_batch_run.py
 ```
 
-Optional: change concurrency when generating the runner:
+By default, this scans `images/` recursively. Optional: change concurrency or
+scan a different single directory recursively:
 
 ```bash
 python3 generate_batch_run.py --max-jobs 8
+python3 generate_batch_run.py --image-dir /path/to/images --max-jobs 4
 ```
 
 Run the generated batch:
@@ -62,6 +64,10 @@ stays readable. It is intentionally not committed to the repo. Update
 `generate_batch_run.py` first, then regenerate `batch_run.sh` locally or inside
 GitHub Actions; do not hand-edit the generated script as the long-term source
 of truth.
+
+For recursive input directories, result and log stems are derived from each
+image's relative path so duplicate filenames in different subdirectories do not
+overwrite each other.
 
 When rerunning batches, note that per-image JSONL files may be overwritten.
 

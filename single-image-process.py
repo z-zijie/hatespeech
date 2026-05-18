@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import argparse
 import base64
 import json
 import mimetypes
@@ -110,15 +111,28 @@ def classify_image(client: OpenAI, model: str, path: Path, temperature: float, s
     return response.choices[0].message.content or ""
 
 
-def result_path_for(image_path: Path) -> Path:
-    return Path.cwd() / f"{image_path.stem}-result.jsonl"
+def result_path_for(result_stem: str) -> Path:
+    return Path.cwd() / f"{result_stem}-result.jsonl"
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Classify one image for hateful meme content.")
+    parser.add_argument("image_path", help="Image file path to classify.")
+    parser.add_argument(
+        "--result-stem",
+        help="Output file stem. Default: input image filename stem.",
+    )
+    parser.add_argument(
+        "--image-label",
+        help="Image label to write in the JSONL record. Default: input image filename.",
+    )
+    return parser.parse_args()
 
 
 def main() -> None:
-    if len(sys.argv) != 2:
-        raise SystemExit("Usage: python3 single-image-process.py [image file path]")
+    args = parse_args()
 
-    image_path = Path(sys.argv[1]).expanduser().resolve()
+    image_path = Path(args.image_path).expanduser().resolve()
     if not image_path.is_file():
         raise SystemExit(f"Image file not found: {image_path}")
     if image_path.suffix.lower() not in IMAGE_EXTENSIONS:
@@ -132,7 +146,9 @@ def main() -> None:
     model = os.environ.get("OPENROUTER_MODEL", "openai/gpt-5.4")
     temperature = float(os.environ.get("OPENROUTER_TEMPERATURE", "0"))
     seed = int(os.environ.get("OPENROUTER_SEED", "42"))
-    result_path = result_path_for(image_path)
+    image_label = args.image_label or image_path.name
+    result_stem = args.result_stem or image_path.stem
+    result_path = result_path_for(result_stem)
 
     client = OpenAI(
         base_url="https://openrouter.ai/api/v1",
@@ -158,7 +174,7 @@ def main() -> None:
         print(output, flush=True)
         print("--- model output end ---", flush=True)
         record = {
-            "image": image_path.name,
+            "image": image_label,
             "model": model,
             "temperature": temperature,
             "seed": seed,
@@ -170,7 +186,7 @@ def main() -> None:
         elapsed = time.monotonic() - started_at
         log(f"ERROR {image_path.name} elapsed={elapsed:.1f}s: {exc}")
         record = {
-            "image": image_path.name,
+            "image": image_label,
             "model": model,
             "temperature": temperature,
             "seed": seed,

@@ -8,12 +8,18 @@ Generate the batch runner:
 python3 generate_batch_run.py
 ```
 
-By default this writes a local generated `batch_run.sh` with 4 parallel jobs.
-This file is intentionally not committed to the repo. To change the
-concurrency, regenerate it with `--max-jobs`:
+By default this recursively scans `images/` and writes a local generated
+`batch_run.sh` with 4 parallel jobs. This file is intentionally not committed
+to the repo. To change the concurrency, regenerate it with `--max-jobs`:
 
 ```bash
 python3 generate_batch_run.py --max-jobs 8
+```
+
+To scan a different single directory recursively:
+
+```bash
+python3 generate_batch_run.py --image-dir /path/to/images --max-jobs 4
 ```
 
 ## OpenRouter API key
@@ -101,10 +107,21 @@ This writes `results/results.csv`.
 
 Use this workflow when you want to process many images on your own machine.
 
-1. Put all input images in the repo's `images/` directory.
+1. Put all input images under one directory.
 
    Supported file extensions are `.jpg`, `.jpeg`, `.png`, `.webp`, and `.gif`.
-   Keep filenames unique, because output files are named from the image stem.
+   The directory may contain nested subdirectories.
+
+   By default, use the repo's `images/` directory:
+
+   ```text
+   images/
+   |-- batch-a/
+   |   |-- image-001.jpg
+   |   `-- image-002.png
+   `-- batch-b/
+       `-- image-003.webp
+   ```
 
 2. Create and load your local `.env` file.
 
@@ -130,6 +147,16 @@ Use this workflow when you want to process many images on your own machine.
 
    Increase `--max-jobs` only if your OpenRouter rate limits, network, and
    local machine can handle more concurrent requests.
+
+   To scan a different directory recursively, pass `--image-dir`:
+
+   ```bash
+   python3 generate_batch_run.py --image-dir /path/to/images --max-jobs 4
+   ```
+
+   The generated output names include the relative subdirectory path, so files
+   with the same filename in different subdirectories will not overwrite each
+   other.
 
 4. Run the generated batch.
 
