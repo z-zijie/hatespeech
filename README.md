@@ -15,11 +15,28 @@ concurrency, regenerate it with `--max-jobs`:
 python3 generate_batch_run.py --max-jobs 8
 ```
 
-Set the OpenRouter API key before running the batch:
+## OpenRouter API key
+
+The batch script calls the OpenRouter API, so you must set
+`OPENROUTER_API_KEY` before running it. Replace `sk-or-...` with your real
+OpenRouter key:
 
 ```bash
 export OPENROUTER_API_KEY=sk-or-...
 ```
+
+This command only sets the key for the current terminal session. If you close
+the terminal or open a new one, run the `export` command again before running
+`bash batch_run.sh`.
+
+You can check whether the variable is set with:
+
+```bash
+echo "$OPENROUTER_API_KEY"
+```
+
+Do not put your real API key in `README.md`, `batch_run.sh`, or any other file
+that will be committed to Git. Keep it in your shell environment only.
 
 Run the batch:
 
