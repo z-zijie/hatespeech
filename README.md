@@ -82,5 +82,5 @@ The workflow will:
 2. Generate `batch_run.sh`.
 3. Run the image batch with `OPENROUTER_API_KEY` from GitHub Secrets.
 4. Merge the JSONL files into `results/results.csv`.
-5. Upload the full `results/` directory as a workflow artifact named
-   `hatespeech-results`.
+5. Upload only `results/results.csv` as a workflow artifact named
+   `hatespeech-results-csv`.
