@@ -1,2 +1,4 @@
 .DS_Store
+.env
 batch_run.sh
+logs/

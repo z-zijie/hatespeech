@@ -25,10 +25,11 @@ def find_images(image_dir: Path) -> list[Path]:
 
 def command_for(image_path: Path) -> str:
     image_arg = shlex.quote(f"../images/{image_path.name}")
+    log_arg = shlex.quote(f"../logs/{image_path.stem}.log")
     return (
         "("
         "cd results && "
-        f"python3 ../single-image-process.py {image_arg}"
+        f"python3 ../single-image-process.py {image_arg} > {log_arg} 2>&1"
         ") &"
     )
 
@@ -89,7 +90,7 @@ def build_script(images: list[Path], max_jobs: int) -> str:
         "#!/usr/bin/env bash",
         "set -euo pipefail",
         "",
-        "mkdir -p results",
+        "mkdir -p results logs",
         "",
         *progress_helpers(len(images)),
         "print_progress",
