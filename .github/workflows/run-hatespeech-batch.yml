@@ -1,0 +1,55 @@
+name: Run hate speech batch
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_jobs:
+        description: Number of images to process in parallel
+        required: true
+        default: "4"
+      model:
+        description: OpenRouter model name
+        required: true
+        default: openai/gpt-5.4
+
+jobs:
+  run-batch:
+    runs-on: ubuntu-latest
+
+    env:
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      OPENROUTER_MODEL: ${{ inputs.model }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: python -m pip install --upgrade pip openai
+
+      - name: Validate OpenRouter API key
+        run: |
+          if [ -z "$OPENROUTER_API_KEY" ]; then
+            echo "OPENROUTER_API_KEY is not set. Add it as a GitHub Actions secret."
+            exit 1
+          fi
+
+      - name: Generate batch runner
+        run: python3 generate_batch_run.py --max-jobs "${{ inputs.max_jobs }}"
+
+      - name: Run batch
+        run: bash batch_run.sh
+
+      - name: Merge results to CSV
+        run: python3 merge_results_to_csv.py
+
+      - name: Upload results
+        uses: actions/upload-artifact@v4
+        with:
+          name: hatespeech-results
+          path: results/
