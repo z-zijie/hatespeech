@@ -1,0 +1,12 @@
+image文件名,判定结果,probability,human
+image-0001.jpg,hateful,0.74,
+image-0002.jpg,hateful,0.97,
+image-0003.png,hateful,0.95,
+image-0004.png,hateful,0.78,
+image-0005.jpg,hateful,0.79,
+image-0006.jpg,hateful,0.9,
+image-0007.jpg,hateful,0.93,
+image-0008.jpg,hateful,0.86,
+image-0009.jpg,hateful,0.82,
+image-0010.jpg,non-hateful,0.0,
+image-0011.jpg,non-hateful,0.0,
