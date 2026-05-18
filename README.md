@@ -8,7 +8,8 @@ Generate the batch runner:
 python3 generate_batch_run.py
 ```
 
-By default this writes `batch_run.sh` with 4 parallel jobs. To change the
+By default this writes a local generated `batch_run.sh` with 4 parallel jobs.
+This file is intentionally not committed to the repo. To change the
 concurrency, regenerate it with `--max-jobs`:
 
 ```bash
@@ -35,8 +36,9 @@ You can check whether the variable is set with:
 echo "$OPENROUTER_API_KEY"
 ```
 
-Do not put your real API key in `README.md`, `batch_run.sh`, or any other file
-that will be committed to Git. Keep it in your shell environment only.
+Do not put your real API key in `README.md`, generated shell scripts, or any
+other file that will be committed to Git. Keep it in your shell environment
+only.
 
 Run the batch:
 
@@ -44,7 +46,15 @@ Run the batch:
 bash batch_run.sh
 ```
 
-Per-image JSONL outputs are written to `results/`.
+The batch runner prints a dependency-free text progress bar as images finish:
+
+```text
+[progress] [##########----------] 5/11 45%
+```
+
+If any image job fails, the progress line includes the failed count and the
+batch exits with a non-zero status after all jobs in flight finish. Per-image
+JSONL outputs are written to `results/`.
 
 Merge the JSONL result files into a CSV:
 
@@ -79,8 +89,9 @@ Then run the workflow manually:
 The workflow will:
 
 1. Install Python and the `openai` package.
-2. Generate `batch_run.sh`.
-3. Run the image batch with `OPENROUTER_API_KEY` from GitHub Secrets.
+2. Generate `batch_run.sh` inside the workflow run.
+3. Run the image batch with `OPENROUTER_API_KEY` from GitHub Secrets, including
+   progress lines in the Actions log.
 4. Merge the JSONL files into `results/results.csv`.
 5. Upload only `results/results.csv` as a workflow artifact named
    `hatespeech-results-csv`.

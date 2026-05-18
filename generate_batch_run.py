@@ -33,6 +33,57 @@ def command_for(image_path: Path) -> str:
     )
 
 
+def progress_helpers(total_images: int) -> list[str]:
+    return [
+        f"TOTAL_IMAGES={total_images}",
+        "completed=0",
+        "failed=0",
+        "overall_status=0",
+        "bar_width=20",
+        "",
+        "print_progress() {",
+        "    local percent=0",
+        "    local filled=0",
+        "    local empty=0",
+        "    local bar=\"\"",
+        "",
+        "    if [ \"$TOTAL_IMAGES\" -gt 0 ]; then",
+        "        percent=$((completed * 100 / TOTAL_IMAGES))",
+        "        filled=$((completed * bar_width / TOTAL_IMAGES))",
+        "    fi",
+        "    empty=$((bar_width - filled))",
+        "    bar=\"$(printf '%*s' \"$filled\" '' | tr ' ' '#')\"",
+        "    bar=\"${bar}$(printf '%*s' \"$empty\" '' | tr ' ' '-')\"",
+        "",
+        "    if [ \"$failed\" -gt 0 ]; then",
+        "        printf '[progress] [%s] %d/%d %d%% (%d failed)\\n' \"$bar\" \"$completed\" \"$TOTAL_IMAGES\" \"$percent\" \"$failed\"",
+        "    else",
+        "        printf '[progress] [%s] %d/%d %d%%\\n' \"$bar\" \"$completed\" \"$TOTAL_IMAGES\" \"$percent\"",
+        "    fi",
+        "}",
+        "",
+        "wait_for_batch() {",
+        "    local pid",
+        "    local status",
+        "",
+        "    for pid in \"$@\"; do",
+        "        if wait \"$pid\"; then",
+        "            status=0",
+        "        else",
+        "            status=$?",
+        "            failed=$((failed + 1))",
+        "            overall_status=1",
+        "            printf '[progress] job failed pid=%s exit=%d\\n' \"$pid\" \"$status\"",
+        "        fi",
+        "",
+        "        completed=$((completed + 1))",
+        "        print_progress",
+        "    done",
+        "}",
+        "",
+    ]
+
+
 def build_script(images: list[Path], max_jobs: int) -> str:
     lines = [
         "#!/usr/bin/env bash",
@@ -40,15 +91,21 @@ def build_script(images: list[Path], max_jobs: int) -> str:
         "",
         "mkdir -p results",
         "",
+        *progress_helpers(len(images)),
+        "print_progress",
+        "",
+        "batch_pids=()",
     ]
 
     for index, image_path in enumerate(images, start=1):
         lines.append(command_for(image_path))
+        lines.append("batch_pids+=(\"$!\")")
         if index % max_jobs == 0:
-            lines.extend(["wait", ""])
+            lines.extend(["wait_for_batch \"${batch_pids[@]}\"", "batch_pids=()", ""])
 
     if len(images) % max_jobs:
-        lines.append("wait")
+        lines.append("wait_for_batch \"${batch_pids[@]}\"")
+    lines.extend(["", "exit \"$overall_status\""])
     return "\n".join(lines) + "\n"
 
 
